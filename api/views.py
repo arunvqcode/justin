@@ -16,10 +16,9 @@ def registration_view(request):
 
             token, created = Token.objects.get_or_create(user=account)
             response_data = {
-                'message': "Registration Successful!",
-                'name': account.name,
-                'email': account.email,
-                'token': token.key
+                'status': 'True',
+                'message': "Registration Successful!"
+            
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         else:
@@ -51,13 +50,15 @@ def login_view(request):
 #         request.user.auth_token.delete()
 #         return Response({'message':"Logout sucessful"},status=status.HTTP_200_OK)       
     
+    
 from rest_framework.authtoken.models import Token
 
 @api_view(['POST'])
 def logout_view(request):
     if request.method == 'POST':
+        token=request.headers.get('Authorization')
         try:
-            token = Token.objects.get(user=request.user)
+            token = Token.objects.get(key=token)
             token.delete()
             return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
