@@ -2,8 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import CustomUser
 from rest_framework.response import Response
-
-
+import re
 
 
 class LoginSerializer(serializers.Serializer):
@@ -19,6 +18,7 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Incorrect password.')
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError('User with this email does not exist.')
+
 
     def validate(self, data):
         email = data.get('email')
@@ -44,7 +44,28 @@ class RegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password' : {'write_only': True}
         }
+        
     
+    def validate_password(self, password):
+        # Minimum length of 8 characters
+        if len(password) < 8:
+            raise serializers.ValidationError('Password must be at least 8 characters long.')
+        
+        # At least one alphabet
+        if not re.search(r'[a-zA-Z]', password):
+            raise serializers.ValidationError('Password must contain at least one alphabet.')
+        
+        # At least one digit
+        if not re.search(r'\d', password):
+            raise serializers.ValidationError('Password must contain at least one digit.')
+        
+        # At least one special character
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            raise serializers.ValidationError('Password must contain at least one special character.')
+        
+        return password
+    
+        
     def save(self):
         name = self.validated_data['name']
         email = self.validated_data['email']
@@ -72,3 +93,22 @@ class RegistrationSerializer(serializers.ModelSerializer):
     #     except CustomUser.DoesNotExist:
     #         raise serializers.ValidationError('User with this email does not exist.')
     #     return value
+    
+    
+    # def validate_password(self, value):
+    #     """
+    #     Validate password against Django password validators and custom complexity requirements.
+    #     """
+    #     validate_password(value)  # Django's password validators
+
+    #     # Custom complexity requirements
+    #     if not re.search(r'[A-Za-z]', value):
+    #         raise serializers.ValidationError("Password must contain at least one letter.")
+
+    #     if not re.search(r'[0-9]', value):
+    #         raise serializers.ValidationError("Password must contain at least one digit.")
+
+    #     if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+    #         raise serializers.ValidationError("Password must contain at least one special character.")
+
+    #     return value    
