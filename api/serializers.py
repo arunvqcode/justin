@@ -1,9 +1,9 @@
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import CustomUser
 from rest_framework.response import Response
 import re
-
+# from django.contrib.auth.models import User
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -65,27 +65,44 @@ class RegistrationSerializer(serializers.ModelSerializer):
         
         return password
     
-        
-    def save(self):
-        name = self.validated_data['name']
-        email = self.validated_data['email']
-        
-        password = self.validated_data['password']
-        password2 = self.validated_data['password2']
+    
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        password2 = validated_data.pop('password2')
 
         if password != password2:
-            raise serializers.ValidationError({'error': 'P1 and P2 should be same!'})
-        
-        if CustomUser.objects.filter(email=self.validated_data['email']).exists():
-            raise serializers.ValidationError({'error': 'Email already exists!'})
-        
-        account = CustomUser(name=name, email=email)
-        account.set_password(password)
-        account.save()
+            raise serializers.ValidationError({'error': 'Passwords do not match.'})
 
-        return account
-    
+        user = CustomUser.objects.create(
+            email=validated_data['email'],
+            username=validated_data['email'],  # Set the username to be the same as the email
+            name=validated_data['name']
+        )
+        user.set_password(password)
+        user.save()
+        return user
 
+
+
+    # def save(self):
+    #     name = self.validated_data['name']
+    #     email = self.validated_data['email']
+    #     password = self.validated_data['password']
+    #     password2 = self.validated_data['password2']
+
+    #     if password != password2:
+    #         raise serializers.ValidationError({'error': 'P1 and P2 should be same!'})
+
+    #     if CustomUser.objects.filter(email=email).exists():
+    #         raise serializers.ValidationError({'error': 'Email already exists!'})
+
+    #     self.validated_data['username'] = email  # Set email as the username
+
+    #     account = CustomUser(name=name, email=email)
+    #     account.set_password(password)
+    #     account.save()
+
+    #     return account
 
     # def validate_email(self, value):
     #     try:
