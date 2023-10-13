@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from .serializers import RegistrationSerializer,LoginSerializer
+from django.http import JsonResponse
 
+from .pdf_QA import get_pdf_text,get_text_chunks,get_vectorstore,get_conversation_chain
 
 
 
@@ -67,5 +69,26 @@ def logout_view(request):
         except Token.DoesNotExist:
             return Response({'status':"False",
                 'error': 'Token not found'}, status=status.HTTP_400_BAD_REQUEST)
-    
+            
+# ---------------wave journal pdf question answers chatbot------------------    
 
+@api_view(['POST','GET'])
+def journal(request):
+    pdf_docs = ['uploads/uploaded_pdf.pdf']
+    raw_text = get_pdf_text(pdf_docs)
+    text_chunks = get_text_chunks(raw_text)
+    vectorstore = get_vectorstore(text_chunks)
+    conversation_chain = get_conversation_chain(vectorstore)
+
+    user_question = request.POST.get('question')
+    print(user_question)
+    
+    response = conversation_chain({'question': user_question})
+    print(response)
+    response_text = response['answer']
+    print("pdf resposne>>>>>>",response_text)
+
+    return JsonResponse({"response_text":response_text})
+
+    
+    
